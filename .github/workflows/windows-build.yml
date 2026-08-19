@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────
+# ۳) بیلد ویندوز: MSI/EXE (Electron/Tauri/.NET)
+# ─────────────────────────────────────────────
+name: windows-build
+
+on:
+  push:
+    branches: [main]
+    paths: ['windows/**', '.github/workflows/windows-build.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build Electron/Tauri app
+        working-directory: windows
+        shell: bash
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+            if [ -d src-tauri ]; then
+              npm run tauri build
+            else
+              npm run dist
+            fi
+          elif ls *.csproj > /dev/null 2>&1; then
+            dotnet publish -c Release -r win-x64 --self-contained
+          fi
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            windows/dist/**/*.msi
+            windows/dist/**/*.exe
+            windows/src-tauri/target/release/bundle/**/*

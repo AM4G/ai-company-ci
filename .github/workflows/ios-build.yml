@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────
+# ۴) بیلد iOS: اجرا روی macOS (GitHub Actions)
+# ⚠️ بدون سرور مک — خروجی از CI ابری می‌آید
+# ─────────────────────────────────────────────
+name: ios-build
+
+on:
+  push:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/ios-build.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build iOS (Swift/Xcode)
+        working-directory: ios
+        run: |
+          if ls *.xcodeproj > /dev/null 2>&1 || ls *.xcworkspace > /dev/null 2>&1; then
+            xcodebuild -scheme App -configuration Release -derivedDataPath build build
+          fi
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release
+          path: ios/build/Build/Products/Release-iphoneos/
